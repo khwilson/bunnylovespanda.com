@@ -1,264 +1,64 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <title>&#x1f430;&#x1f499;&#x1f43c;</title>
-    <style type="text/css">
-.emoji {
-  font-weight: normal;
-  font-family: "Apple Color Emoji","Segoe UI Emoji","NotoColorEmoji","Segoe UI Symbol","Android Emoji","EmojiSymbols";
-}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-.instructions {
-  font-weight: normal;
-  font-family: "Arial";
-  font-size: 150%;
-  text-align: center;
-}
+    <title>Breakout Love</title>
+
+    <style>
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto;
+      }
+
+      .grid-item {
+        text-align: center;
+      }
+
+      .fadeIn {
+        animation: fadeIn 2s ease;
+        animation-fill-mode: forwards;
+      }
+
+      @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+
+      .fadeOut {
+        animation: fadeOut 2s ease;
+        animation-fill-mode: forwards;
+      }
+
+      @keyframes fadeOut {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+
+      .hidden {
+        opacity: 0;
+      }
+
+      .container {
+        display: flex;
+        justify-content: center;
+      }
+
     </style>
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript">
-
-    var MAX_MOVE = 5;
-    var PLAY_WIDTH = 600;
-    var PLAY_HEIGHT = 300;
-    var PANDA_CENTER_X = PLAY_WIDTH / 2;
-    var PANDA_CENTER_Y = PLAY_HEIGHT;
-    var HEART_RADIUS = 50;
-    var heartRadius = HEART_RADIUS;
-    var HEART_ANGLE_TURN = Math.PI / 90;
-
-    var MIN_HEART_ANGLE = 0.0;
-    var MAX_HEART_ANGLE = Math.PI;
-    var heartAngle = 0.0;
-    var bunnyAngle = 0.0;
-    var bunnyRadius = 200;
-    var bunnyDirection = Math.PI / 90;
-
-    var BUNNY_MOVE_TIMEOUT = 100;
-
-    var heartFiring = false;
-    var bunnyMoving = true;
-    var bunnyArcMoving = false;
-
-    var score = 0;
-
-    var pandaUnicode = "\u{1f43c}";
-    var blueHeartUnicode = "\u{1f499}";
-    var bunnyUnicode = "\u{1f430}";
-    var kissingEmoji ="\u{1F468}\u{200d}\u{2764}\u{fe0f}\u{200d}\u{1F48B}\u{200d}\u{1F468}";
-
-function clip(x, min, max) {
-  x = x < min ? min : x;
-  x = x > max ? max : x;
-  return x;
-}
-
-function bunnyMove() {
-  var bunny = $("#bunny");
-  var currentLeft = parseInt(bunny.css("left"));
-  var currentTop = parseInt(bunny.css("top"));
-  var leftRandom = Math.round(MAX_MOVE * (Math.random() * 2 - 1));
-  var topRandom = Math.round(MAX_MOVE * (Math.random() * 2 - 1));
-
-  var newLeft = clip(currentLeft + leftRandom, 0, PLAY_WIDTH);
-  var newTop = clip(currentTop + topRandom, 0, PLAY_HEIGHT);
-
-  bunny.css("left", newLeft);
-  bunny.css("top", newTop);
-  if (bunnyMoving) {
-    setTimeout(bunnyMove, BUNNY_MOVE_TIMEOUT);
-  }
-}
-
-function placeHeart(theHeartAngle, theHeartRadius) {
-  // Remember the fact that this is a left-handed system, so reverse the sin angle
-  $("#heart").css("top", theHeartRadius * Math.sin(-theHeartAngle) + PANDA_CENTER_Y)
-             .css("left", theHeartRadius * Math.cos(theHeartAngle) + PANDA_CENTER_X);
-}
-
-function moveHeart(multiplier) {
-  // Don't rotate the heart if it is firing
-  if (heartFiring) return;
-
-  heartAngle += multiplier * HEART_ANGLE_TURN;
-  heartAngle = clip(heartAngle, MIN_HEART_ANGLE, MAX_HEART_ANGLE);
-  placeHeart(heartAngle, heartRadius);
-}
-
-function bunnyAndHeartCollide() {
-  var bunny = $("#bunny");
-  var heart = $("#heart");
-
-  bunnyPosition = bunny.position();
-  bunnyPosition.bottom = bunnyPosition.top + bunny.height();
-  bunnyPosition.right = bunnyPosition.left + bunny.width();
-
-  heartPosition = heart.position();
-  heartPosition.bottom = heartPosition.top + heart.height();
-  heartPosition.right = heartPosition.left + heart.width();
-
-  minTopper = bunnyPosition.top < heartPosition.top ? bunnyPosition : heartPosition;
-  maxTopper = minTopper === bunnyPosition ? heartPosition : bunnyPosition;
-
-  minLefter = bunnyPosition.left < heartPosition.left ? bunnyPosition : heartPosition;
-  maxLefter = minLefter === bunnyPosition ? heartPosition : bunnyPosition;
-
-  return minTopper.bottom >= maxTopper.top && minLefter.right >= maxLefter.left;
-}
-
-function bigBunnyHeartPanda() {
-  $("#bunny").animate({
-    top: 0,
-    left: 0,
-    fontSize: "120px",
-  });
-  $("#heart").animate({
-    top: 0,
-    left: PLAY_WIDTH / 2 - 60,
-    fontSize: "120px"
-  });
-  $("#panda").animate({
-    top: 0,
-    left: PLAY_WIDTH - 120,
-    fontSize: "120px"
-  }, 1000);
-
-  // These crazy multibyte unicode emoji are crazy
-  $("#kissing").css("position", "absolute")
-               .width(PLAY_WIDTH * 4)
-               .css("top", 150)
-               .css("fontSize", 120)
-               .css("left", (PLAY_WIDTH - 480) / 2)
-               .fadeIn();
-  $("#instructions").fadeOut();
-}
-
-function bunnyArcMove() {
-  if (!bunnyArcMoving) { return; }
-
-  bunnyAngle += bunnyDirection;
-  if (bunnyAngle > MAX_HEART_ANGLE || bunnyAngle < MIN_HEART_ANGLE) {
-    bunnyAngle = clip(bunnyAngle, MIN_HEART_ANGLE, MAX_HEART_ANGLE);
-    bunnyDirection = -bunnyDirection;
-  }
-
-  $("#bunny").css("top", bunnyRadius * Math.sin(-bunnyAngle) + PANDA_CENTER_Y);
-  $("#bunny").css("left", bunnyRadius * Math.cos(bunnyAngle) + PANDA_CENTER_X);
-  setTimeout(bunnyArcMove, BUNNY_MOVE_TIMEOUT);
-}
-
-function multipleString(theString, numRepeat) {
-  var retVal = "";
-  for (var i = 0; i < numRepeat; ++i) {
-    retVal += theString;
-    if (i < numRepeat - 1) {
-      retVal += "  ";
-    }
-  }
-  return retVal;
-}
-
-function fireHeart() {
-  heartFiring = true;
-  heartRadius += 10;
-  placeHeart(heartAngle, heartRadius);
-
-  var heart = $("#heart");
-  var heartTop = parseInt(heart.css("top"));
-  var heartLeft = parseInt(heart.css("left"));
-
-  // collision
-  if (bunnyAndHeartCollide()) {
-    bunnyMoving = false;
-    bunnyArcMoving = false;
-    heartFiring = false;
-    score += 1;
-
-    if (score != 4) {
-      $("#bunny").text(multipleString(kissingEmoji, score));
-      setTimeout(resetAll, 1000);
-      return;
-    } else {
-      bigBunnyHeartPanda();
-    }
-  } else if (heartTop < 0 || heartLeft < 0 || heartLeft > PLAY_WIDTH) {
-    // reset
-    heartRadius = HEART_RADIUS;
-    placeHeart(heartAngle, heartRadius);
-    heartFiring = false;
-  } else {
-    setTimeout(fireHeart, 50);
-  }
-}
-
-function resetAll() {
-  $("#bunny").text(bunnyUnicode);
-  if (score % 2 == 1) {
-    heartRadius = HEART_RADIUS;
-    placeHeart(heartAngle, heartRadius);
-    var maxBunnyRadius = Math.min(PLAY_HEIGHT, PLAY_WIDTH / 2);
-    var minBunnyRadius = PANDA_CENTER_X / 2;
-    bunnyRadius = Math.random() * (maxBunnyRadius - minBunnyRadius) + minBunnyRadius;
-    bunnyArcMoving = true;
-    bunnyArcMove();
-  } else {
-    heartRadius = HEART_RADIUS;
-    placeHeart(heartAngle, heartRadius);
-    $("#bunny").css("top", Math.random() * PLAY_HEIGHT / 2)
-               .css("left", Math.random() * PLAY_WIDTH);
-    bunnyMoving = true;
-    bunnyMove();
-  }
-}
-
-    $(document).ready(function() {
-$("#panda").text(pandaUnicode)
-           .css("top", PANDA_CENTER_Y)
-           .css("left", PANDA_CENTER_X)
-           .css("fontSize", "2em")
-           .css("position", "absolute");
-$("#heart").text(blueHeartUnicode)
-           .css("fontSize", "2em")
-           .css("position", "absolute");
-placeHeart(heartAngle, heartRadius);
-$("#bunny").text(bunnyUnicode)
-           .css("fontSize", "2em")
-           .css("top", "0")
-           .css("left", "0")
-           .css("position", "absolute");
-$("#instructions").text("Instructions: " + pandaUnicode + " hit " + bunnyUnicode + " with " + blueHeartUnicode + " with arrow keys!")
-                  .css("top", PLAY_HEIGHT + 50)
-                  .css("position", "absolute")
-                  .width(PLAY_WIDTH);
-$("#kissing").text(multipleString(kissingEmoji, 4))
-            .css("position", "absolute")
-            .css("display", "none");
-bunnyMove();
-    }).keydown(function(event) {
-    switch(event.which) {
-      case 37: // left
-        moveHeart(1);
-        break;
-
-      case 38: // up
-        fireHeart();
-        break;
-
-      case 39: // right
-        moveHeart(-1);
-        break;
-
-      default: return;
-
-    }
-});
-    </script>
   </head>
   <body>
-    <div class="emoji" id="panda"></div>
-    <div class="emoji" id="heart"></div>
-    <div class="emoji" id="bunny"></div>
-    <div class="emoji" id="kissing"></div>
-    <div class="instructions" id="instructions"></div>
+    <div class="grid-container">
+      <div class="grid-item">
+        <h2 id="orig-title">Birthday Games!</h2>
+        <h2 id="new-title" class="hidden">From Bunny and Potential Puffin</h2>
+      </div>
+      <div class="grid-item">
+        <div class="interstitial-wrapper">
+          <!-- Canvas will go here -->
+        </div>
+      </div>
+    </div>
   </body>
+  <script src="breakout.js"></script>
 </html>
